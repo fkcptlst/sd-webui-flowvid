@@ -13,6 +13,52 @@ from typing import List, Tuple, Union, Optional
 from copy import deepcopy
 from PIL import Image
 
+vfps = None
+vframesize = None
+def video2list(video_path: str) -> []:
+    global vfps, vframesize
+    cap = cv2.VideoCapture(str(video_path))
+    assert cap.isOpened()
+    vfps = cap.get(cv2.CAP_PROP_FPS)
+    vframesize = (cap.get(cv2.CAP_PROP_FRAME_HEIGHT), cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    print(vframesize)
+    framenum = int(cap.get(7))
+    video = []
+    for i in tqdm(range(framenum), desc="Video2ImageList"):
+        a, b=cap.read()
+        if a == False:
+            break
+        b = np.array(b)
+        video.append(b)
+    cap.release()
+    return video
+
+
+def list2video(imgs: []) -> str:
+    fps = vfps if vfps is not None else 24
+    framesize = vframesize if vframesize is not None else (256, 256)
+    fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+    path = f"{datetime.now().timestamp()}.mp4"
+    video = cv2.VideoWriter(path, fourcc=fourcc, fps=float(fps), frameSize=framesize)
+    for i in tqdm(imgs, desc="List to Videos"):
+        # TODO: Numpy 到底怎么转成 cv2.mat ???
+        video.write(i.astype('uint8'))
+    video.release()
+    cv2.destroyAllWindows()
+    return path
+
+
+def unwrap_param(*args, **kwargs):
+    guide_frame = args[0]
+    flow_list = video2list(args[1])
+    print(type(flow_list[0]))
+    mask_type = str(args[2])
+    user_forward_warp = bool(args[3])
+    user_moving_mask = bool(args[4])
+    moving_mask_threshold = float(args[5])
+    adaptive_inpainting = bool(args[6])
+    return guide_frame, flow_list, mask_type, user_forward_warp, user_moving_mask, moving_mask_threshold, adaptive_inpainting
+
 class Script(scripts.Script):
 
     # The title of the script. This is what will be displayed in the dropdown menu.
@@ -33,7 +79,34 @@ class Script(scripts.Script):
     # The returned values are passed to the run method as parameters.
 
     def ui(self, is_img2img: bool) -> dict:
-        # TODO: add UI components, return a dictionary
+        gr.Markdown("# 测试")
+        with gr.Accordion("README", open=False):
+            content = """
+                # 这是一个标题
+                ## 这是二级标题
+            """
+            gr.Markdown(content)
+
+        with gr.Box():
+            gr.Markdown("Input")
+            with gr.Column():
+                with gr.Row():
+                    first_frame = gr.Image(label="第一帧")
+                    video_flow = gr.PlayableVideo(format='mp4', source='upload', label="光流")
+                mask_type = gr.Dropdown(choices = ["cat", "image_mask2", "image_mask1"], label="Mask Type", value="cat")
+                user_forward_warp = gr.Checkbox(value=True, label="user_forward_warp")
+                user_moving_mask = gr.Checkbox(value=True, label="user_moving_mask")
+                moving_mask_threshold = gr.Slider(1, 5, value=3, label="moving_mask_threshold")
+                adaptive_inpainting = gr.Checkbox(value=True, label="adaptive_inpainting")
+        return = [
+            first_frame,                # 0 
+            video_flow,                 # 1
+            mask_type,                  # 2
+            user_forward_warp,          # 3
+            user_moving_mask,           # 4
+            moving_mask_threshold,      # 5
+            adaptive_inpainting,        # 6
+        ]
         pass
 
     # This is where the additional processing is implemented. The parameters include
@@ -112,12 +185,4 @@ class Script(scripts.Script):
 
 
         return Processed(images_list=result_images_pil)
-
-
-
-
-
-
-
-
 
