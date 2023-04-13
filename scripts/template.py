@@ -1,3 +1,6 @@
+"""
+Template for extension script
+"""
 import modules.scripts as scripts
 import gradio as gr
 import os
