@@ -20,8 +20,7 @@ def video2list(video_path: str) -> []:
     cap = cv2.VideoCapture(str(video_path))
     assert cap.isOpened()
     vfps = cap.get(cv2.CAP_PROP_FPS)
-    vframesize = (cap.get(cv2.CAP_PROP_FRAME_HEIGHT), cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    print(vframesize)
+    vframesize = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     framenum = int(cap.get(7))
     video = []
     for i in tqdm(range(framenum), desc="Video2ImageList"):
@@ -41,10 +40,8 @@ def list2video(imgs: []) -> str:
     path = f"{datetime.now().timestamp()}.mp4"
     video = cv2.VideoWriter(path, fourcc=fourcc, fps=float(fps), frameSize=framesize)
     for i in tqdm(imgs, desc="List to Videos"):
-        # TODO: Numpy 到底怎么转成 cv2.mat ???
         video.write(i.astype('uint8'))
     video.release()
-    cv2.destroyAllWindows()
     return path
 
 
