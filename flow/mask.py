@@ -1,5 +1,5 @@
 from itertools import product
-
+import cv2
 import numpy as np
 
 
@@ -36,10 +36,13 @@ def get_moving_mask(flow: np.ndarray, binarize: bool = False, threshold: float =
 
     if binarize:
         moving_mask = np.maximum(forward_mag, backward_mag)
+        moving_mask[moving_mask < threshold] = 0
         moving_mask[moving_mask > 0] = 1
+        # use morphological closing to fill holes
+        moving_mask = cv2.morphologyEx(moving_mask, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+
     else:
         moving_mask = np.maximum(forward_mag, backward_mag)
-
-    moving_mask[moving_mask < threshold] = 0
+        moving_mask[moving_mask < threshold] = 0
 
     return moving_mask

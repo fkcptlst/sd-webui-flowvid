@@ -30,7 +30,9 @@ def forward_warp(image_1: Tensor, flow: Tensor) -> Tensor:
     new_x_coords = torch.round(xx + flow[:, 0, ...]).clamp(0, W - 1).int()  # (B, H, W)
     new_y_coords = torch.round(yy + flow[:, 1, ...]).clamp(0, H - 1).int()  # (B, H, W)
 
-    I_1to2 = torch.zeros_like(image_1)
+    # I_1to2 = torch.zeros_like(image_1)
+    # TODO use random initialization, range [image_1.min(), image_1.max()]
+    I_1to2 = torch.rand_like(image_1) * (image_1.max() - image_1.min()) + image_1.min()
 
     for b, x, y in product(range(B), range(W), range(H)):  # TODO: vectorize
         I_1to2[b, :, new_y_coords[b, y, x], new_x_coords[b, y, x]] = image_1[b, :, y, x]
